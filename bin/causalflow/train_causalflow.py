@@ -9,6 +9,7 @@ import optuna
 from floody import data as D
 # causalflow
 from causalflow import causalflow
+from causalflow import support as Support
 
 
 
@@ -71,7 +72,7 @@ def SupportObjective(trial):
             learning_rate=lr,
             num_iter=300,
             clip_max_norm=1,
-            verbose=False)
+            verbose=args.verbose)
 
     # save trained flow
     fflow = os.path.join(output_dir, study_name, '%s.%i.pt' % (study_name, trial.number))
@@ -131,5 +132,6 @@ if __name__=="__main__":
     if args.flow == 'flow': # train flow
         study.optimize(FlowObjective, n_trials=n_trials, n_jobs=n_jobs)
     elif args.flow == 'support': # train support flow 
+        ndim = XY.shape[1] - 1 
         study.optimize(SupportObjective, n_trials=n_trials, n_jobs=n_jobs)
     print("  Number of finished trials: %i" % len(study.trials))
