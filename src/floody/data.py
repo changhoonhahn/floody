@@ -41,8 +41,12 @@ class FEMA(ZipData):
         # read data set 
         self._data = _load_data('floody.fema.compiled.hdf5')
 
-    def prepare_train_test(self, split=0.9, seed=42): 
+    def prepare_train_test(self, sample, split=0.9, seed=42): 
         ''' prepare training and testing datasets (numpy arrays) for CausalFlow
+
+        args: 
+            sample: str, specifying whether 'treated' or 'control' sample. 
+
 
         kwargs: 
             split: float between 0-1 specifying the train/test split. 
@@ -56,11 +60,23 @@ class FEMA(ZipData):
 
         '''
         # data will be read in this column order 
-        columns = ['paid_claim_per_policy', 'mean_monthly_rainfall',
-                   'median_household_income', 'population', 'renter_fraction',
-                   'educated_fraction', 'white_fraction'] 
+        columns = ['paid_claim_per_policy', # claim paid per policy 
+                   'mean_monthly_rainfall', # mean monthly rainfall 
+                   'flood_risk100', #'flood_risk_avg_score' we're using 'flood risk 100 as a proxy for flood risk average score 
+                   'median_household_income',
+                   'population', 
+                   'renter_fraction', 
+                   'educated_fraction',
+                   'white_fraction'] 
 
-        data = np.array([self._data[col] for col in columns]).T
+        treated = self._data['CRS_TREAT'] 
+        if sample == 'treated':  # treated sample
+            keep = treated
+        elif sample == 'control':  # control sample 
+            keep = ~treated
+        else: raise ValueError
+
+        data = np.array([self._data[col] for col in columns]).T[keep]
 
         # shuffle dataset 
         ishfl = np.arange(data.shape[0])
