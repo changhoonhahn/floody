@@ -147,8 +147,6 @@ def _load_data(filename):
         return Table.read(os.path.join('/Users/chahah/data/noah/', filename))
     elif os.path.isdir('/scratch/gpfs/chhahn/noah/'): 
         # della 
-        return Table.read(os.path.join('/scratch/gpfs/chhahn/noah/', filename))
+        return Table.read(os.path.join('/scratch/gpfs/chhahn/noah/floody/', filename))
     else: 
         raise ValueError
-
-
