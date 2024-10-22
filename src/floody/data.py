@@ -5,6 +5,7 @@ module to interface with different datasets
 '''
 import os
 import numpy as np 
+import geopandas as gpd
 from astropy.table import Table
 
 
@@ -28,16 +29,16 @@ class ZipData(object):
 
         if np.sum(is_zcode) == 0: return None  # there are no zipcodes 
 
-        return np.array(self._data[col][is_zcode]) 
+        return self._data[col][is_zcode]
 
     def columns(self): 
-        return self._data.columns() 
+        return self._data.columns
 
 
 class FEMA(ZipData): 
-    '''
-    '''
     def __init__(self): 
+        '''
+        '''
         # read data set 
         self._data = _load_data('floody.fema.compiled.hdf5')
 
@@ -139,14 +140,58 @@ class FloodRisk(ZipData):
         self._data = _load_data('floody.fsf.floodrisk_forecast.hdf5')
 
 
-def _load_data(filename): 
+class Precip(ZipData): 
+    def __init__(self): 
+        ''' Precipitation data from PRISM
+        '''
+        self._data = _load_data('floody.prism.precip.hdf5', dtype='table') 
+
+
+class Census(ZipData): 
+    def __init__(self): 
+        ''' ACS Census data from 2016-2020
+        '''
+        self._data = _load_data('floody.acs_census.hdf5', dtype='table') 
+
+
+def _load_data(filename, dtype='table'): 
     ''' load data 
     '''
     if os.path.isdir('/Users/chahah/data/noah/'):  
         # local machine 
-        return Table.read(os.path.join('/Users/chahah/data/noah/', filename))
+        if dtype == 'table': 
+            return Table.read(os.path.join('/Users/chahah/data/noah/', filename))
+        elif dtype == 'gpd': 
+            return gpd.read_file(os.path.join('/Users/chahah/data/noah/', filename))
     elif os.path.isdir('/scratch/gpfs/chhahn/noah/'): 
         # della 
-        return Table.read(os.path.join('/scratch/gpfs/chhahn/noah/floody/', filename))
+        if dtype == 'table': 
+            return Table.read(os.path.join('/scratch/gpfs/chhahn/noah/floody/', filename))
+        elif dtype == 'gpd': 
+            return gpd.read_file(os.path.join('/scratch/gpfs/chhahn/noah/floody/', filename))
     else: 
         raise ValueError
+
+
+def read_zipshape(zipcodes): 
+    ''' select shape files for given zipcodes from following file: 
+    https://catalog.data.gov/dataset/tiger-line-shapefile-2022-nation-u-s-2020-census-5-digit-zip-code-tabulation-area-zcta5
+    '''
+    data = _load_data('tl_2022_us_zcta520/tl_2022_us_zcta520.shp', dtype='gpd')
+
+    # some sensible renaming of the columns 
+    data = data.rename(columns={'ZCTA5CE20': 'ZIPCODE',
+                                  'INTPTLAT20': 'LATITUDE',
+                                  'INTPTLON20': 'LONGITUDE'})
+    
+    # select specifieid zipshapes  
+    is_zips = np.zeros(len(data)).astype(bool)
+    for z in zipcodes: 
+        is_zip = np.array(data['ZIPCODE']).astype(int) == z
+        if np.sum(is_zip) != 1:
+            raise ValueError('Zipcode not list the list') 
+        is_zips[is_zip] = True
+
+    return data[is_zips]
+
+
