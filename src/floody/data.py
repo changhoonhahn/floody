@@ -231,7 +231,7 @@ def get_X(zipcodes, latitude, longitude, year):
             # interpolate between 2022-2052
             _risk2052 = fsf._find_zipcode(zcode, 'risk100.2052')[0]
             _risk2022 = fsf._find_zipcode(zcode, 'risk100.2022')[0]
-            X_20XX[i,1] = (_risk2052 - _risk2022)/30. * (year - 2022)
+            X_20XX[i,1] = _risk2022 + (_risk2052 - _risk2022)/30. * (year - 2022)
 
         # median income
         X_20XX[i,2] = acs._find_zipcode(zcode, 'income')[0]
