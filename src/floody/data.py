@@ -195,3 +195,57 @@ def read_zipshape(zipcodes):
     return data[is_zips]
 
 
+def get_X(zipcodes, latitude, longitude, year): 
+    ''' get compiled covariates X for specified year 
+    '''
+    # check inputs
+    if year not in [2022, 2030, 2040, 2052]: raise ValueError 
+
+    assert len(zipcodes) == len(latitude)
+    assert len(zipcodes) == len(longitude)
+
+    prism   = Precip()
+    fsf     = FloodRisk()
+    acs     = Census()
+    cmip    = Forecast()
+
+    X_20XX = np.empty((len(zipcodes), 7))
+    for i, zcode in enumerate(zipcodes):
+        # precipitation 
+        if year == 2022: 
+            # maximum monthly precipitation in 2022
+            X_20XX[i,0] = np.max(prism._find_zipcode(zcode, 'precip.2022'))
+        else: 
+            # maximum monthly precipitation in 20XX
+            _precip = []
+            for month in range(1, 13):
+                _precip.append(cmip.forecast_latlon(latitude[i], longitude[i] % 360, year, month))
+
+            X_20XX[i,0] = np.max(np.array(_precip)) 
+    
+        
+        # flood risk100 
+        if year == 2022: # 2022
+            X_20XX[i,1] = fsf._find_zipcode(zcode, 'risk100.2022')[0]
+        else: 
+            # interpolate between 2022-2052
+            _risk2052 = fsf._find_zipcode(zcode, 'risk100.2052')[0]
+            _risk2022 = fsf._find_zipcode(zcode, 'risk100.2022')[0]
+            X_20XX[i,1] = (_risk2052 - _risk2022)/30. * (year - 2022)
+
+        # median income
+        X_20XX[i,2] = acs._find_zipcode(zcode, 'income')[0]
+
+        # population
+        X_20XX[i,3] = acs._find_zipcode(zcode, 'population')[0]
+
+        # renter fraction
+        X_20XX[i,4] = acs._find_zipcode(zcode, 'renter_fraction')[0]
+
+        # educated fraction
+        X_20XX[i,5] = acs._find_zipcode(zcode, 'educated_fraction')[0]
+
+        # white fraction
+        X_20XX[i,6] = acs._find_zipcode(zcode, 'white_fraction')[0]
+
+    return X_20XX
