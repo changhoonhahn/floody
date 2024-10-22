@@ -25,5 +25,5 @@ setup(
         "Programming Language :: Python"
     ],
     keywords = ['machinelearning'],
-    install_requires=["torch", "numpy", "astropy", "sbi"]
+    install_requires=["torch", "numpy", "astropy", "sbi", "geopandas"]
 )
