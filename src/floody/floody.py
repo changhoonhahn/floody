@@ -5,6 +5,7 @@ module for main calculations
 
 '''
 import numpy as np 
+import warnings
 
 import torch
 
@@ -39,7 +40,7 @@ def flood_loss(mon_rain, flood_risk100, income, population, rent_frac, edu_frac,
             verbose=False)
     
     in_support = Supp.check_support(X, Nsample=Nsample, threshold=support_threshold)[0] 
-    if not in_support: print('out of support') 
+    if not in_support: warnings.warn("X is out of support")
     
     # sample the flows at X 
     y_samp = []

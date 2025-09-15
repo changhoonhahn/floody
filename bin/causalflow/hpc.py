@@ -48,7 +48,7 @@ def _deploy_base_slurm(job_name, output_name, cmd, hr=1):
 
 
 if __name__=="__main__": 
-    train_flows('treated', hr=6)
-    train_flows('control', hr=6)
-    train_supports('treated', hr=6)
-    train_supports('control', hr=6)
+    #train_flows('treated', hr=6)
+    #train_flows('control', hr=6)
+    train_supports('treated', hr=12)
+    train_supports('control', hr=12)
